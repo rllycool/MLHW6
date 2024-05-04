@@ -19,6 +19,7 @@ print("Data Preprocessing, Please Wait", end="", flush=True)
 ellipsis()
 os.system('cls')
 print("Data Loaded!")
+print('')
 
 file = open('RiceData.data', 'r')
 lines = file.readlines()
@@ -77,14 +78,49 @@ if nn_1_cross_entropies < nn_2_cross_entropies:
 else:
     print("NN with 2 hidden layers performs better on the validation data.")
 
+
 #Excercise 3
 #Decision Trees
 from sklearn.tree import DecisionTreeClassifier
 
-
 print('')
 print("Decision Trees:")
 
-#parta fit dt
+#parta fit dt using gini    
 dt = DecisionTreeClassifier(criterion='gini', max_depth=5, random_state=10)
 dt.fit(train_data[:, :-1], train_data[:, -1])
+
+#partb probability predictions
+dt_probs = dt.predict_proba(validate_data[:, :-1])
+dt_cross_entropies = log_loss(validate_data[:, -1], dt_probs)
+
+#partc fit dt2 using info gain
+dt2= DecisionTreeClassifier(criterion='entropy', max_depth=5, random_state=10)
+dt2.fit(train_data[:, :-1], train_data[:, -1])
+
+#partd probability predictions
+dt2_probs = dt2.predict_proba(validate_data[:, :-1])
+dt2_cross_entropies = log_loss(validate_data[:, -1], dt2_probs)
+
+#report the cross entropies
+print("Cross Entropy for gini dt:", dt_cross_entropies)
+print("Cross Entropy for info gain dt:", dt2_cross_entropies)
+
+#report better model
+if dt_cross_entropies < dt2_cross_entropies:
+    print("Decision Tree with gini criterion performs better on the validation data.")
+elif dt_cross_entropies == dt2_cross_entropies:
+    print("Both Decision Trees perform equally well on the validation data.")
+else:
+    print("Decision Tree with info gain criterion performs better on the validation data.")
+
+#parte TODO
+
+
+#Excercise 4 Boosting
+from sklearn.ensemble import AdaBoostClassifier
+
+print('')
+print("Boosting:")
+
+#Excercise 5 ROC CURVE
