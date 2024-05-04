@@ -40,12 +40,14 @@ for i, line in enumerate(lines):
     newLines.append(s)
 
 #Remove 20% of the examples, selected at random, and keep them for testing
-test_data, rest = sklMS.train_test_split(newLines, test_size=0.2, train_size=0.8, random_state=10)
-validate_data, train_data = sklMS.train_test_split(rest, test_size=0.25, train_size=0.75, random_state=10)
+test_data, rest = sklMS.train_test_split(newLines, test_size=0.2, train_size=0.8)
+validate_data, train_data = sklMS.train_test_split(rest, test_size=0.25, train_size=0.75)
 
 #convert train_data and validate_data to numpy arrays
 train_data = np.array(train_data)
+test_data = np.array(test_data)
 validate_data = np.array(validate_data)
+
 
 
 # Excercise 2 Artifical Neural Networks
@@ -74,9 +76,15 @@ print("Cross Entropy for NN with 2 hidden layers:", nn_2_cross_entropies)
 
 #Report better model
 if nn_1_cross_entropies < nn_2_cross_entropies:
+    best_nn = nn_1
     print("NN with 1 hidden layer performs better on the validation data.")
 else:
+    best_nn = nn_2
     print("NN with 2 hidden layers performs better on the validation data.")
+
+#partc
+best_nn.fit(train_data[:, :-1], train_data[:, -1])
+test_probs = best_nn.predict_proba(test_data[:, :-1])
 
 
 #Excercise 3
@@ -122,5 +130,27 @@ from sklearn.ensemble import AdaBoostClassifier
 
 print('')
 print("Boosting:")
+
+b20 = AdaBoostClassifier(estimator=DecisionTreeClassifier(max_depth=1), n_estimators=20, algorithm="SAMME" ,random_state=10)
+b20.fit(train_data[:, :-1], train_data[:, -1])
+
+b40 = AdaBoostClassifier(estimator=DecisionTreeClassifier(max_depth=1), n_estimators=40, algorithm="SAMME", random_state=10)
+b40.fit(train_data[:, :-1], train_data[:, -1])
+
+b60 = AdaBoostClassifier(estimator=DecisionTreeClassifier(max_depth=1), n_estimators=60, algorithm="SAMME", random_state=10)
+b60.fit(train_data[:, :-1], train_data[:, -1])
+
+b20_probs = b20.predict_proba(validate_data[:, :-1])
+b40_probs = b40.predict_proba(validate_data[:, :-1])
+b60_probs = b60.predict_proba(validate_data[:, :-1])
+
+b20_cross_entropies = log_loss(validate_data[:, -1], b20_probs)
+b40_cross_entropies = log_loss(validate_data[:, -1], b40_probs)
+b60_cross_entropies = log_loss(validate_data[:, -1], b60_probs)
+
+print("Cross Entropy for boosting with 20 estimators:", b20_cross_entropies)
+print("Cross Entropy for boosting with 40 estimators:", b40_cross_entropies)
+print("Cross Entropy for boosting with 60 estimators:", b60_cross_entropies)
+
 
 #Excercise 5 ROC CURVE
