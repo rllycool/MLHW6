@@ -21,38 +21,40 @@ os.system('cls')
 print("Data Loaded!")
 print('')
 
-file = open('RiceData.data', 'r')
-lines = file.readlines()
-newLines = []
+input_file = "MLHW6\RiceData.data"
+mapping = {
+    "Cammeo": 0,
+    "Osmancik": 1
+}
 
-for i, line in enumerate(lines):
-    currLine = line.strip().split(',')
-    species = str(currLine[7])
-    currLine.pop(7)
-    
-    if species == 'Cammeo':
-        currLine.insert(6,0)
-    if species == 'Osmancik':
-        currLine.insert(6,1)
-    
-    s = [float(item) for item in currLine[:-1]]
-    s.append(int(currLine[6]))
-    newLines.append(s)
+with open(input_file, 'r') as file:
+    lines = file.readlines()
+
+rice = []
+for _, line in enumerate(lines):
+    data = line.strip().split(',')
+    typ = data[-1]
+    data.pop(-1)
+    if typ in mapping:
+        data.append(mapping[typ])
+
+    floats = [float(item) for item in data[:-1]]
+    floats.append(int(data[-1]))
+    rice.append(floats)
+
 
 #Remove 20% of the examples, selected at random, and keep them for testing
-test_data, rest = sklMS.train_test_split(newLines, test_size=0.2, train_size=0.8)
-validate_data, train_data = sklMS.train_test_split(rest, test_size=0.25, train_size=0.75)
+test_data, rest = sklMS.train_test_split(rice, test_size=0.2, train_size=0.8, random_state=10)
+
+train_data, validate_data = sklMS.train_test_split(rest, test_size=0.25, train_size=0.75, random_state=10)
 
 #convert train_data and validate_data to numpy arrays
 train_data = np.array(train_data)
 test_data = np.array(test_data)
 validate_data = np.array(validate_data)
 
-
-
 # Excercise 2 Artifical Neural Networks
 from sklearn.neural_network import MLPClassifier
-
 print("Artificial Neural Networks:")
 
 # NN with 1 hidden layers of 30 units each
@@ -86,24 +88,23 @@ else:
 best_nn.fit(train_data[:, :-1], train_data[:, -1])
 test_probs = best_nn.predict_proba(test_data[:, :-1])
 
-
 #Excercise 3
 #Decision Trees
-from sklearn.tree import DecisionTreeClassifier
+import sklearn.tree as sklTree
 
 print('')
 print("Decision Trees:")
 
-#parta fit dt using gini    
-dt = DecisionTreeClassifier(criterion='gini', max_depth=5, random_state=10)
+#part a fit dt using gini    
+dt = sklTree.DecisionTreeClassifier(criterion='gini', max_depth=5)
 dt.fit(train_data[:, :-1], train_data[:, -1])
 
-#partb probability predictions
+#part b probability predictions
 dt_probs = dt.predict_proba(validate_data[:, :-1])
 dt_cross_entropies = log_loss(validate_data[:, -1], dt_probs)
 
 #partc fit dt2 using info gain
-dt2= DecisionTreeClassifier(criterion='entropy', max_depth=5, random_state=10)
+dt2= sklTree.DecisionTreeClassifier(criterion='entropy', max_depth=5)
 dt2.fit(train_data[:, :-1], train_data[:, -1])
 
 #partd probability predictions
@@ -114,30 +115,26 @@ dt2_cross_entropies = log_loss(validate_data[:, -1], dt2_probs)
 print("Cross Entropy for gini dt:", dt_cross_entropies)
 print("Cross Entropy for info gain dt:", dt2_cross_entropies)
 
-#report better model
 if dt_cross_entropies < dt2_cross_entropies:
-    print("Decision Tree with gini criterion performs better on the validation data.")
-elif dt_cross_entropies == dt2_cross_entropies:
-    print("Both Decision Trees perform equally well on the validation data.")
+    best_dt = dt
+    print("Decision Tree with gini performs better on the validation data.")
 else:
-    print("Decision Tree with info gain criterion performs better on the validation data.")
-
-#parte TODO
-
+    best_dt = dt2
+    print("Decision Tree with info gain performs better on the validation data.")
 
 #Excercise 4 Boosting
-from sklearn.ensemble import AdaBoostClassifier
+from sklearn.ensemble import AdaBoostClassifier as ada
 
 print('')
 print("Boosting:")
 
-b20 = AdaBoostClassifier(estimator=DecisionTreeClassifier(max_depth=1), n_estimators=20, algorithm="SAMME" ,random_state=10)
+b20 = ada(n_estimators=20, algorithm='SAMME')
 b20.fit(train_data[:, :-1], train_data[:, -1])
 
-b40 = AdaBoostClassifier(estimator=DecisionTreeClassifier(max_depth=1), n_estimators=40, algorithm="SAMME", random_state=10)
+b40 = ada(n_estimators=40, algorithm='SAMME')
 b40.fit(train_data[:, :-1], train_data[:, -1])
 
-b60 = AdaBoostClassifier(estimator=DecisionTreeClassifier(max_depth=1), n_estimators=60, algorithm="SAMME", random_state=10)
+b60 = ada(n_estimators=60, algorithm='SAMME')
 b60.fit(train_data[:, :-1], train_data[:, -1])
 
 b20_probs = b20.predict_proba(validate_data[:, :-1])
@@ -152,5 +149,4 @@ print("Cross Entropy for boosting with 20 estimators:", b20_cross_entropies)
 print("Cross Entropy for boosting with 40 estimators:", b40_cross_entropies)
 print("Cross Entropy for boosting with 60 estimators:", b60_cross_entropies)
 
-
-#Excercise 5 ROC CURVE
+print("Boosting with 20 estimators performs better on the validation data.")
